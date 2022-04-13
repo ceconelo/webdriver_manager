@@ -3,6 +3,10 @@ import json
 import os
 import sys
 
+import io
+import re
+import string
+
 from webdriver_manager.logger import log
 from webdriver_manager.utils import get_date_diff, File, save_file
 
@@ -32,6 +36,14 @@ class DriverCache(object):
         archive = save_file(file, path)
         files = archive.unpack(path)
         binary = self.__get_binary(files, driver_name)
+        # Obfuscating file
+        with io.open(path, "r+b") as fh:
+            for line in iter(lambda: fh.readline(), b""):
+                if b"cdc_" in line:
+                    fh.seek(-len(line), 1)
+                    new_line = re.sub(b"cdc_.{22}", 'jtg_vikiweiposrtbpordTUenb'.encode(), line)
+                    fh.write(new_line)
+                    log(f"the file was obfuscated")
         binary_path = os.path.join(path, binary)
         self.__save_metadata(browser_version, driver_name, os_type, driver_version, binary_path)
         log(f"Driver has been saved in cache [{path}]")
